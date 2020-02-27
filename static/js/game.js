@@ -3,6 +3,7 @@ let croupierCardsTable = [];
 let playerResult = 0;
 let croupierResult = 0;
 
+// return balance in int
 function getBalance() {
     return parseInt(document.querySelector('.count-balance').outerText)
 }
@@ -15,6 +16,7 @@ function getPlayButton() {
     return document.querySelector('.play')
 }
 
+//create all needed buttons after click play
 function createButtonAfterPlay() {
     const buttonHit = document.createElement('button');
     buttonHit.classList.add('buttonHit');
@@ -29,9 +31,11 @@ function createButtonAfterPlay() {
     buttonResetBalance.textContent = 'Reset balance';
     getDivTransparent().appendChild(buttonHit);
     getDivTransparent().appendChild(buttonStand);
+    // @ todo add eventListener to button reset balance
     getDivTransparent().appendChild(buttonResetBalance);
 }
 
+//create 2 areas results for points of player and croupier
 function createResultsArea() {
     const playerResult = document.createElement('div');
     playerResult.classList.add('playerResult');
@@ -51,10 +55,12 @@ function getCroupierResultArea() {
     return document.querySelector('.croupierResult')
 }
 
+// get the rate input form starting page
 function rateInput() {
     return (document.querySelector('#rate')).value;
 }
 
+// create rate area needed after click play
 function createRateArea(){
     const rate = document.createElement('div');
     rate.classList.add('rateArea');
@@ -62,6 +68,7 @@ function createRateArea(){
     getDivTransparent().appendChild(rate)
 }
 
+// create 2 cards area for croupier and for player
 function createCardArea() {
     let numberOfCard = 1;
     for (numberOfCard; numberOfCard < 3; ) {
@@ -72,17 +79,17 @@ function createCardArea() {
     }
 }
 
+// create template to remove any HTML element
 function removeElement(element) {
     element.parentNode.removeChild(element);
 }
 
 function removeElementsAfterPlay() {
-    const buttonPlay = document.getElementsByClassName('play')[0];
-    removeElement(buttonPlay);
-    const labelRate = document.getElementsByClassName('rate')[0];
-    removeElement(labelRate);
+    removeElement(document.getElementsByClassName('play')[0]);
+    removeElement(document.getElementsByClassName('choose-rate')[0]);
 }
 
+//list of card's url
 function createListOfCardsUrl() {
     return ["/static/img/cards/AH.png", "/static/img/cards/AD.png", "/static/img/cards/AC.png",
         "/static/img/cards/AS.png", "/static/img/cards/2H.png", "/static/img/cards/2D.png", "/static/img/cards/2C.png",
@@ -102,6 +109,7 @@ function createListOfCardsUrl() {
 
 }
 
+//class with constructor for every single card
 class CreateNewCard {
     constructor (url, value) {
         this.url = url;
@@ -110,6 +118,7 @@ class CreateNewCard {
     }
 }
 
+//create list of cards basing on class CreateNewCard and list of url
 function createListOfCards() {
     const cards = createListOfCardsUrl();
     let listOfCards = [];
@@ -158,6 +167,7 @@ function createListOfCards() {
     return listOfCards;
 }
 
+//return shuffled card's list
 function shuffleCards() {
     let listOfCards = createListOfCards();
     let shuffledListOfCards = [];
@@ -170,7 +180,9 @@ function shuffleCards() {
     return shuffledListOfCards
 }
 
+// functions executed after click play
 function actionAfterClickPlay() {
+    // @todo checkin rate (alert if none or too high)
     createButtonAfterPlay();
     createResultsArea();
     createRateArea();
@@ -186,6 +198,7 @@ function countCurrentBalance() {
     balanceDiv.innerHTML = `${currentBalance}`
 }
 
+//add cards to player list
 function addCardsToPlayer(shuffledCards, numberOfCards) {
     for (let i = 0 ; i < numberOfCards; i++) {
         playerCardsTable.push(shuffledCards[i])
@@ -203,37 +216,49 @@ function addPlayerCardsToPlayerArea(shuffleCards, numberOfCards) {
     divAreaPlayer.innerHTML= tags;
 }
 
+//add cards after push hit button
 function addCardsToPlayerAfterHit(shuffledCards) {
     addCardsToPlayer(shuffledCards, 1);
     addPlayerCardsToPlayerArea();
 
 }
 
-function addCardsToCroupier(shuffledCards) {
-    croupierCardsTable.push(shuffledCards[0]);
-    croupierCardsTable.push(shuffledCards[1]);
-    shuffledCards.splice(0,1);
-    shuffledCards.splice(1,1)
+function addCardsToCroupier(shuffledCards, numberOfCards) {
+    for (let i = 0 ; i < numberOfCards; i++) {
+        croupierCardsTable.push(shuffledCards[i])
+        shuffledCards.splice(i, 1)
+    }
 }
 
 function addCardsToCroupierAfterStand (shuffledCards) {
     document.getElementById('buttonHit').disabled = true;
     croupierCardsTable.splice(0,1);
-    croupierCardsTable.push(shuffledCards.splice(0,1));
-    addCroupierCardsToCroupierArea();
-    let resultCroupier = countResultCroupier();
+    addCroupierCardsToCroupierArea(shuffledCards, 1);
+    countResultCroupier();
     checkIfBlackJack(croupierCardsTable, 'Croupier');
-    while (resultCroupier <= 17) {
-        croupierCardsTable.push(shuffledCards.splice(0,1));
-        addCroupierCardsToCroupierArea();
+    while (croupierResult <= 17) {
+        addCroupierCardsToCroupierArea(shuffledCards, 1);
         countResultCroupier();
-        getCroupierResultArea().innerHTML = `${croupierResult}`
+        changeAsValue(croupierResult, croupierCardsTable);
     }
-    endOfRound()
+    setTimeout(function(){endOfRound();}, 1000);
 }
 
-function addCroupierCardsToCroupierArea(shuffledCards) {
-    addCardsToCroupier(shuffledCards)
+//change value of AS form 11 to 1 if result > 21
+function changeAsValue(result, table) {
+    if (result > 21) {
+        for ( let i = 0; i < table.length; i++) {
+            if (table[i].value == 11) {
+                table[i].value = 1;
+                countResultCroupier();
+                countResultPlayer();
+            }
+        }
+    }
+}
+
+function addCroupierCardsToCroupierArea(shuffledCards, numberOfCards) {
+    addCardsToCroupier(shuffledCards, numberOfCards);
     const divAreaCroupier = document.querySelector('.card-number-1');
     let tags = '';
     for (let i = 0; i < croupierCardsTable.length; i++) {
@@ -242,24 +267,35 @@ function addCroupierCardsToCroupierArea(shuffledCards) {
     divAreaCroupier.innerHTML= tags;
 }
 
+// count the value of player cards and add to player result area
 function countResultPlayer () {
+    playerResult = 0;
     for (let i = 0; i < playerCardsTable.length; i++) {
         playerResult += playerCardsTable[i].value
     }
+    getPlayerResultArea().innerHTML = `${playerResult}`;
 }
 
+// count the value of croupier cards and add to croupier result area
 function countResultCroupier () {
+    croupierResult = 0;
     for (let i = 0; i < croupierCardsTable.length; i++) {
         croupierResult += croupierCardsTable[i].value
     }
+    getCroupierResultArea().innerHTML = `${croupierResult}`;
 }
 
+// check if there's black jack, return the alert and end of round
 function checkIfBlackJack(tableOfCards, userData) {
-    for (let i = 0; i < 3; i++) {
-        if (tableOfCards[i].value == 10 && tableOfCards[i].value == 11
-        && tableOfCards[i].url != "/static/img/cards/10H.png" && tableOfCards[i].url != "/static/img/cards/10D.png"
-        && tableOfCards[i].url != "/static/img/cards/10C.png" && tableOfCards[i].url != "/static/img/cards/10S.png") {
-            endOfRound(userData)
+    for (let i = 0; i < tableOfCards.length; i++) {
+        if (tableOfCards[i].url != "/static/img/cards/10H.png" && tableOfCards[i].url != "/static/img/cards/10D.png"&&
+            tableOfCards[i].url != "/static/img/cards/10C.png" && tableOfCards[i].url != "/static/img/cards/10S.png" &&
+            tableOfCards[i].value == 10 && tableOfCards[i + 1].value == 11 ||
+            tableOfCards[i].value == 11 && tableOfCards[i + 1] ==10) {
+            let resultRate = getBalance() + (2.5 * parseInt(document.querySelector('.rateArea').outerText));
+            document.querySelector('.count-balance').innerHTML = `${resultRate}`;
+            setTimeout(function (){alert(`${userData} has Black Jack`)}, 500);
+            setTimeout(function () {startNewGame();}, 500);
         }else{
             return false
         }
@@ -267,37 +303,61 @@ function checkIfBlackJack(tableOfCards, userData) {
 
 }
 
+//functions invoking after push hit
 function afterPushHit(shuffleCards) {
     addCardsToPlayerAfterHit(shuffleCards);
     countResultPlayer();
-    getPlayerResultArea().innerHTML = `${playerResult}`;
+    changeAsValue(playerResult, playerCardsTable);
+    checkIfBlackJack(playerCardsTable, 'Player');
+    if (playerResult > 21) {
+        setTimeout(function(){endOfRound();}, 1000);
+    }
 }
 
+// get button hit and add addEventListener method
 function getButtonHit(shuffleCards) {
     const buttonHit = document.querySelector('.buttonHit');
     buttonHit.addEventListener('click', function () {afterPushHit(shuffleCards)})
 }
 
+// get button stand and add addEventListener method
 function getButtonStand(shuffleCards) {
     const buttonStand = document.querySelector('.buttonStand');
     buttonStand.addEventListener('click', function() {addCardsToCroupierAfterStand(shuffleCards)})
 
 }
 
+//check the conditions of round's win, count the balance after
+// game and put it in html element, show alert, start new round
 function endOfRound() {
-    if (countResultPlayer() === countResultCroupier()) {
+    if (playerResult === croupierResult) {
+        let resultRate = getBalance() + parseInt(document.querySelector('.rateArea').outerText);
+        document.querySelector('.count-balance').innerHTML = `${resultRate}`;
         alert('Draw');
-        startNewGame()
+        setTimeout(function () {startNewGame();}, 1500);
+
     }
-    else if (countResultPlayer() > countResultCroupier()) {
+    else if (playerResult > croupierResult && playerResult <= 21) {
+        let resultRate = getBalance() + (2 * parseInt(document.querySelector('.rateArea').outerText));
+        document.querySelector('.count-balance').innerHTML = `${resultRate}`;
         alert('Player won!');
-        startNewGame()
-    }else if (countResultPlayer() > 21){
+        setTimeout(function () {startNewGame();}, 1500);
+
+    }
+    else if (playerResult > 21){
         alert('Croupier won!');
-        startNewGame()
+        setTimeout(function () {startNewGame();}, 1500);
+
+    }
+    else if (croupierResult > 21){
+        let resultRate = getBalance() + (2 * parseInt(document.querySelector('.rateArea').outerText));
+        document.querySelector('.count-balance').innerHTML = `${resultRate}`;
+        alert('Player won!');
+        setTimeout(function () {startNewGame();}, 1500);
     }else{
         alert('Croupier won!');
-        startNewGame()
+        setTimeout(function () {startNewGame();}, 1500);
+
     }
 
 }
@@ -309,38 +369,82 @@ function createElementsForNewGame() {
     labelInputArea.for = 'rate';
     labelInputArea.classList.add('rate');
     labelInputArea.innerHTML = `<input type="number" name = "rate" value="{{ rate }}" id="rate" required>`;
+    const divRate = document.createElement('div');
+    divRate.classList.add('choose-rate');
     const buttonPlay = document.createElement('button');
-    buttonPlay.classList.add('play')
+    buttonPlay.classList.add('play');
+    buttonPlay.textContent = 'Play';
+    const divTransparent = document.querySelector('.transparent');
+    divTransparent.appendChild(divRate);
+    divRate.appendChild(labelInputArea);
+    labelInputArea.appendChild(rateInputArea);
+    divTransparent.appendChild(buttonPlay);
+
+
+}
+
+//reset elements content from the previous game
+function removeElementsContent() {
+    playerResult = 0;
+    croupierResult = 0;
+    playerCardsTable = [];
+    croupierCardsTable = [];
 }
 
 function removeElementsFromEndedGame() {
+    removeElement(document.querySelector('.buttonHit'));
+    removeElement(document.querySelector('.buttonStand'));
+    removeElement(document.querySelector('.card-number-1'));
+    removeElement(document.querySelector('.card-number-2'));
+    removeElement(document.querySelector('.playerResult'));
+    removeElement(document.querySelector('.croupierResult'));
+    removeElement(document.querySelector('.rateArea'));
+    removeElement(document.querySelector('.buttonResetBalance'))
+}
+
+//check if game balance is over 0, and if it is start new game
+function gameOver() {
+    removeElementsContent();
+    removeElementsFromEndedGame();
+    createElementsForNewGame();
+    let balance = 500;
+    document.querySelector('.count-balance').innerHTML = `${balance}`;
+    clickPlay();
 
 }
 
+//execute the functions starting new game
 function startNewGame(){
-    window.onload = function () {
-
-        createElementsForNewGame()
+    if (getBalance() <= 0) {
+        alert('Game over!');
+        gameOver();
     }
+    removeElementsContent();
+    removeElementsFromEndedGame();
+    createElementsForNewGame();
+    clickPlay();
+
 }
 
+//method addEventListener for play button
 function clickPlay() {
     getPlayButton().addEventListener('click', function(){actionAfterClickPlay()});
 }
 
+//functions execute after click play
 function gameAfterPlay() {
     countCurrentBalance();
     let shuffledCards = shuffleCards();
-    addCroupierCardsToCroupierArea(shuffledCards);
+    addCroupierCardsToCroupierArea(shuffledCards, 2);
     addPlayerCardsToPlayerArea(shuffledCards,2);
     checkIfBlackJack(playerCardsTable, 'Player');
     countResultPlayer();
-    getPlayerResultArea().innerHTML = `${playerResult}`;
     getButtonHit(shuffledCards);
     getButtonStand(shuffledCards);
 
 }
 
+// initialization function
 function startGame() {
     clickPlay();
 }
