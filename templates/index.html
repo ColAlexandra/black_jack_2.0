@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>BlackJack</title>
+    <link rel="stylesheet" href="{{url_for('static', filename='css/index.css')}}">
+</head>
+<body>
+<div class="transparent">
+<div class="count-balance">{{balance}}
+        <input type="hidden" name = "count-balance" value="{{ balance }}" id="count-balance" disabled>
+    </div>
+
+    <div class="choose-rate">
+<!--        <div class="minus"><img src="/static/img/minus.png" id = 'minusButton'></div>-->
+        <label for="rate" class="rate"> <input type="number" name = "rate" value="{{ rate }}" id="rate" required></label>
+<!--        <div class="plus"><img src="/static/img/plus.png"></div>-->
+
+    </div>
+
+<button class="play">Play</button>
+</div>
+    <script src="/static/js/game.js"></script>
+</div>
+</body>
+</html>
